@@ -1,12 +1,9 @@
+#define GAS_SENSOR    // for testing decreasing required memory space
 //BMP280
-#include <Wire.h>
-#include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
 //SD
-#include <SPI.h>
 #include <SD.h>
 //MICS-6814
-//#include "d:\bedr\02-proj\cansat\sw\Spacenox_cansat_code_V1.1\libraries/IOExpander_Library-master/GasBreakout.h"
 #include "GasBreakout.h"
 //APC220
 #include <SoftwareSerial.h>
@@ -16,22 +13,11 @@ Adafruit_BMP280 bmp;
 //SD
 const int chipSelect = 10;
 //MICS-6814
+#ifdef GAS_SENSOR
 GasBreakout gas(Wire, 0x18);
-//time
-unsigned long Millitime;
-int Minute = 0;
+#endif
 //APC220
 SoftwareSerial mySerial(2, 3);
-
-
-//var BMP280
-int T = 0;
-int Altitude = 0;
-int Pa = 0;
-//var MICS-6814
-
-
-
 
 void setup() {
   Serial.begin(9600);
@@ -51,10 +37,12 @@ void setup() {
   //MICS-6814
   Wire.begin();
   
+#ifdef GAS_SENSOR
   if(!gas.initialise()){
       Serial.println("MICS6814 - Not Initialised");
       while(1);
   }
+#endif
   Serial.println("MICS6814 - Initialised");
   Serial.print("Initializing SD card...");
 
@@ -75,6 +63,7 @@ void setup() {
 
 void loop() {
   //var time
+  unsigned long Millitime;
   Millitime = millis();
   int Secondtime = Millitime / 1000;
   int Minute = Secondtime / 60;
@@ -84,6 +73,10 @@ void loop() {
   
 
 //var BMP280
+  float T = 0;
+  float Altitude = 0;
+  float Pa = 0;
+
   T = bmp.readTemperature();
   Altitude = bmp.readAltitude(1013.25);
   Pa = bmp.readPressure();
@@ -127,6 +120,7 @@ void loop() {
     mySerial.print(Pa); mySerial.print(" Pa\t");
     mySerial.print(Altitude); mySerial.print(" m\t");
 
+#ifdef GAS_SENSOR
     GasBreakout::Reading reading;
     reading = gas.readAll();
 
@@ -135,7 +129,7 @@ void loop() {
     Serial.print("Ox: ");
     Serial.println(reading.oxidising);
     Serial.println("");
-    
+#endif    
     
     dataFile.close();
   }

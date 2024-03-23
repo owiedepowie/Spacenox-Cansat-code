@@ -14,10 +14,11 @@ const uint8_t IOExpander::Pin::MASK_P[4] = {REG_INT_MASK_P0, REG_INT_MASK_P1, (u
 const uint8_t IOExpander::Pin::PWML[6] = {REG_PWM0L, REG_PWM1L, REG_PWM2L, REG_PWM3L, REG_PWM4L, REG_PWM5L};
 const uint8_t IOExpander::Pin::PWMH[6] = {REG_PWM0H, REG_PWM1H, REG_PWM2H, REG_PWM3H, REG_PWM4H, REG_PWM5H};
 
+#ifdef DEBUG_CANSAT
 const char* IOExpander::MODE_NAMES[3] = {"IO", "PWM", "ADC"};
 const char* IOExpander::GPIO_NAMES[4] = {"QB", "PP", "IN", "OD"};
 const char* IOExpander::STATE_NAMES[2] = {"LOW", "HIGH"};
-  
+#endif  
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CONSTRUCTORS/DESTRUCTOR
@@ -212,6 +213,7 @@ bool IOExpander::initialise(bool skipChipIdCheck)
     uint16_t chipId = getChipId();
     if(chipId != CHIP_ID)
     {
+#ifdef DEBUG_CANSAT
       if(_debug)
       {
         Serial.print("Chip ID invalid: ");
@@ -219,6 +221,7 @@ bool IOExpander::initialise(bool skipChipIdCheck)
         Serial.print(" expected: ");
         Serial.println(CHIP_ID, HEX);
       }
+#endif      
       bSucceeded = false;
     }
   }
@@ -338,8 +341,10 @@ void IOExpander::pwmLoad(bool waitForLoad)
       delay(1); //Wait for "LOAD" to complete
       if(millis() - startTime >= _timeout)
       {
+#ifdef DEBUG_CANSAT
         if(_debug)
           Serial.println("Timed out waiting for PWM load!");
+#endif          
         return;
       }
     }
@@ -365,8 +370,10 @@ void IOExpander::pwmClear(bool waitForClear)
       delay(1); //Wait for "CLRPWM" to complete
       if(millis() - startTime >= _timeout)
       {
+#ifdef DEBUG_CANSAT
         if(_debug)
           Serial.println("Timed out waiting for PWM clear!");
+#endif          
         return;
       }
     }
@@ -402,11 +409,13 @@ bool IOExpander::setPwmControl(uint8_t divider)
     case 128: pwmdiv2 = 0b111;    break;
 
     default:
+#ifdef DEBUG_CANSAT
       if(_debug)
       {
         Serial.print("ValueError: A clock divider of ");
         Serial.println(divider);
       }
+#endif      
       dividerGood = false;
       break;
   }
@@ -470,16 +479,19 @@ void IOExpander::setMode(uint8_t pin, uint8_t mode, bool schmittTrigger, bool in
   
   if(ioPin.getMode() == mode)
   {
+#ifdef DEBUG_CANSAT
     if(_debug)
     {
       Serial.print("Mode already is ");
       Serial.println(MODE_NAMES[ioType]);
     }
+#endif    
     return;
   }
 
   if((ioType != Pin::TYPE_IO) && !ioPin.modeSupported(mode))
   {
+#ifdef DEBUG_CANSAT
     if(_debug)
     {
       Serial.print("Pin ");
@@ -488,10 +500,12 @@ void IOExpander::setMode(uint8_t pin, uint8_t mode, bool schmittTrigger, bool in
       Serial.print(MODE_NAMES[ioType]);
       Serial.println("!");
     }
+#endif    
     return;
   }
 
   ioPin.setMode(mode);
+#ifdef DEBUG_CANSAT
   if(_debug)
   {
     Serial.print("Setting pin ");
@@ -503,6 +517,7 @@ void IOExpander::setMode(uint8_t pin, uint8_t mode, bool schmittTrigger, bool in
     Serial.print(", state: ");
     Serial.println(STATE_NAMES[initialState]);
   }
+#endif  
 
   if(mode == PIN_MODE_PWM)
   {
@@ -550,8 +565,10 @@ int16_t IOExpander::input(uint8_t pin, uint32_t adcTimeout)
 
   if(pin < 1 || pin > NUM_PINS)
   {
-    if(_debug)
+#ifdef DEBUG_CANSAT
+  if(_debug)
       Serial.println("ValueError: Pin should be in range 1-14.");
+#endif      
     return -1;
   }
 
@@ -559,11 +576,13 @@ int16_t IOExpander::input(uint8_t pin, uint32_t adcTimeout)
 
   if(ioPin.getMode() == PIN_MODE_ADC)
   {
+#ifdef DEBUG_CANSAT
     if(_debug)
     {
       Serial.print("Reading ADC from pin ");
       Serial.println(pin);
     }
+#endif    
       
     clrBits(REG_ADCCON0, 0x0f);
     setBits(REG_ADCCON0, ioPin._adcChannel);
@@ -581,8 +600,10 @@ int16_t IOExpander::input(uint8_t pin, uint32_t adcTimeout)
       delay(10);
       if(millis() - startTime >= adcTimeout)
       {
+#ifdef DEBUG_CANSAT
         if(_debug)
           Serial.println("Timeout waiting for ADC conversion!");
+#endif          
         return -1;
       }
     }
@@ -593,12 +614,15 @@ int16_t IOExpander::input(uint8_t pin, uint32_t adcTimeout)
   }
   else
   {
+#ifdef DEBUG_CANSAT
+
     if(_debug)
     {
       Serial.print("Reading IO from pin ");
       Serial.println(pin);
     }
-    
+#endif
+
     uint8_t pv = getBit(ioPin._reg_p, ioPin._pin);
     return (pv) ? HIGH : LOW;
   }
@@ -616,8 +640,10 @@ float IOExpander::inputAsVoltage(uint8_t pin, uint32_t adcTimeout)
 
   if(pin < 1 || pin > NUM_PINS)
   {
+#ifdef DEBUG_CANSAT
     if(_debug)
       Serial.println("ValueError: Pin should be in range 1-14.");
+#endif      
     return -1;
   }
 
@@ -625,11 +651,13 @@ float IOExpander::inputAsVoltage(uint8_t pin, uint32_t adcTimeout)
 
   if(ioPin.getMode() == PIN_MODE_ADC)
   {
+#ifdef DEBUG_CANSAT
     if(_debug)
     {
       Serial.print("Reading ADC from pin ");
       Serial.println(pin);
     }
+#endif    
       
     clrBits(REG_ADCCON0, 0x0f);
     setBits(REG_ADCCON0, ioPin._adcChannel);
@@ -647,8 +675,10 @@ float IOExpander::inputAsVoltage(uint8_t pin, uint32_t adcTimeout)
       delay(1);
       if(millis() - startTime >= adcTimeout)
       {
+#ifdef DEBUG_CANSAT
         if(_debug)
           Serial.println("Timeout waiting for ADC conversion!");
+#endif          
         return -1;
       }
     }
@@ -659,11 +689,13 @@ float IOExpander::inputAsVoltage(uint8_t pin, uint32_t adcTimeout)
   }
   else
   {
+#ifdef DEBUG_CANSAT
     if(_debug)
     {
       Serial.print("Reading IO from pin ");
       Serial.println(pin);
     }
+#endif    
     
     uint8_t pv = getBit(ioPin._reg_p, ioPin._pin);
     return (pv) ? _vref : 0.0f;
@@ -687,11 +719,13 @@ void IOExpander::output(uint8_t pin, uint16_t value, bool load)
 
   if(ioPin.getMode() == PIN_MODE_PWM)
   {
+#ifdef DEBUG_CANSAT
     if(_debug)
     {
       Serial.print("Outputting PWM to pin: ");
       Serial.println(pin);
     }
+#endif    
 
     i2cWrite8(ioPin._reg_pwml, (uint8_t)(value & 0xff));
     i2cWrite8(ioPin._reg_pwmh, (uint8_t)(value >> 8));
@@ -702,22 +736,26 @@ void IOExpander::output(uint8_t pin, uint16_t value, bool load)
   {
     if(value == LOW)
     {
+#ifdef DEBUG_CANSAT
       if(_debug)
       {
         Serial.print("Outputting LOW to pin: ");
         Serial.println(pin);
       }
+#endif      
       
       clrBit(ioPin._reg_p, ioPin._pin);
     }
     else if(value == HIGH)
     {
+#ifdef DEBUG_CANSAT
       if(_debug)
       {
         Serial.print("Outputting HIGH to pin: ");
         Serial.println(pin);
       }
-      
+#endif
+
       setBit(ioPin._reg_p, ioPin._pin);
     }
   }

@@ -1,6 +1,7 @@
 #ifndef _IOEXPANDER_h
 #define _IOEXPANDER_h
 
+//#define DEBUG_CANSAT
 /***** Includes *****/
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
@@ -242,9 +243,12 @@ private:
   static const uint8_t PIN_MODE_PWM = 0b00101;  //PWM, Output, Push-Pull mode
   static const uint8_t PIN_MODE_ADC = 0b01010;  //ADC, Input-only (high-impedance)
 
+#ifdef DEBUG_CANSAT
   static const char* MODE_NAMES[3];  //['IO', 'PWM', 'ADC']
   static const char* GPIO_NAMES[4];  //['QB', 'PP', 'IN', 'OD']
   static const char* STATE_NAMES[2]; //['LOW', 'HIGH']
+#endif
+  
 public:
   static const uint8_t PIN_IN = PIN_MODE_IN;          //0b00010
   static const uint8_t PIN_IN_PULL_UP = PIN_MODE_PU;  //0b10000
