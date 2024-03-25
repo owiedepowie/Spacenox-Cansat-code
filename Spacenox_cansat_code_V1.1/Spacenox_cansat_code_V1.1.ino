@@ -39,25 +39,25 @@ void setup() {
   
 #ifdef GAS_SENSOR
   if(!gas.initialise()){
-      Serial.println("MICS6814 - Not Initialised");
+      mySerial.println("MICS6814 - Not Initialised");
       while(1);
   }
 #endif
-  Serial.println("MICS6814 - Initialised");
-  Serial.print("Initializing SD card...");
+  mySerial.println("MICS6814 - Initialised");
+  mySerial.print("Initializing SD card...");
 
   // see if the card is present and can be initialized:
   if (!SD.begin(chipSelect)) {
-    Serial.println("Card failed, or not present");
+   mySerial.println("Card failed, or not present");
     // don't do anything more:
     while (1);
   }
-  Serial.println("card initialized.");
+ mySerial.println("card initialized.");
 
 
   File dataFile = SD.open("datalog.txt", FILE_WRITE);
-  dataFile.println("Time\tTemperature\tPressure\tAltitude");
-  Serial.println("Time\tTemperature\tPressure\tAltitude");
+  dataFile.println("Time\tTemperature\tPressure\tAltitude\tAmmonia\tNitrogen Dioxide");
+  mySerial.println("Time\tTemperature\tPressure\tAltitude\tAmmonia\tNitrogen Dioxide");
   dataFile.close();
 }
 
@@ -65,10 +65,8 @@ void loop() {
   //var time
   unsigned long Millitime;
   Millitime = millis();
-  int Secondtime = Millitime / 1000;
-  int Minute = Secondtime / 60;
-  int Minutetime = Minute * 60;
-  int Second = Secondtime - Minutetime;
+  int Minute = (Millitime / 1000) / 60;
+  int Second = (Millitime / 1000) - (Minute * 60);
   
   
 
@@ -104,11 +102,11 @@ void loop() {
     }
     if (Second < 10) {
       dataFile.print("0"); dataFile.print(Second);
-      mySerial.print("0"); mySerial.println(Second);
+      mySerial.print("0"); mySerial.print(Second);
     }
     else {
       dataFile.print(Second);
-      mySerial.println(Second);
+      mySerial.print(Second);
     }
     dataFile.print("\t");
     dataFile.print (T); dataFile.print(" *C\t");
@@ -121,14 +119,14 @@ void loop() {
     mySerial.print(Altitude); mySerial.print(" m\t");
 
 #ifdef GAS_SENSOR
+
     GasBreakout::Reading reading;
     reading = gas.readAll();
 
-    Serial.print("NH3: ");
-    Serial.println(reading.nh3);
-    Serial.print("Ox: ");
-    Serial.println(reading.oxidising);
-    Serial.println("");
+    float NH3 = pow(reading.nh3, -1.67) / 1.47;
+    float NO2 = pow(reading.oxidising, 1.007) / 6.855;
+    mySerial.print(NH3); Serial.print(" ppm\t");
+    mySerial.print(NO2); Serial.println(" ppm");
 #endif    
     
     dataFile.close();
